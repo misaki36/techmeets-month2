@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Laravel Docker 開発環境
 
 ## 使用技術
@@ -37,7 +36,3 @@ docker compose exec app php artisan migrate
 ## アクセス先
 - Laravel: http://localhost
 - phpMyAdmin: http://localhost:8080
-=======
-# README
-## セットアップ手順
->>>>>>> c06fad69be7245c8f304568170a43cca487e710d
