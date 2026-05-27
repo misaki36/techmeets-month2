@@ -1,37 +1,45 @@
-@extends('layouts.app')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            投稿を編集
+        </h2>
+    </x-slot>
 
-@section('content')
-    <h1>投稿を編集</h1>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                <form method="POST" action="{{ route('posts.update', $post) }}">
+                    @csrf
+                    @method('PATCH')
 
-    <form action="{{ route('posts.update', $post) }}" method="POST">
-        @csrf
-        @method('PUT')
+                    <div class="mb-4">
+                        <label class="block text-gray-700">タイトル</label>
+                        <input type="text" name="title" value="{{ old('title', $post->title) }}"
+                               class="w-full border rounded p-2 mt-1">
+                        @error('title')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-        <div>
-            <label>タイトル</label>
-            <input type="text" name="title" value="{{ old('title', $post->title) }}">
-            @error('title')
-                <p class="error">{{ $message }}</p>
-            @enderror
+                    <div class="mb-4">
+                        <label class="block text-gray-700">本文</label>
+                        <textarea name="body" rows="6"
+                                  class="w-full border rounded p-2 mt-1">{{ old('body', $post->body) }}</textarea>
+                        @error('body')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit"
+                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        更新する
+                    </button>
+
+                    <a href="{{ route('posts.show', $post) }}" class="ml-4 text-gray-500 hover:underline">
+                        キャンセル
+                    </a>
+                </form>
+            </div>
         </div>
-
-        <div>
-            <label>カテゴリー</label>
-            <input type="text" name="category" value="{{ old('category', $post->category) }}">
-            @error('category')
-                <p class="error">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <div>
-            <label>内容</label>
-            <textarea name="content" rows="8">{{ old('content', $post->content) }}</textarea>
-            @error('content')
-                <p class="error">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <button type="submit" class="btn-primary">更新する</button>
-        <a href="{{ route('posts.index') }}">← 戻る</a>
-    </form>
-@endsection
+    </div>
+</x-app-layout>

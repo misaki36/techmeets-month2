@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-    // 入力を許可するカラム
-    protected $fillable = [
-        'title',
-        'content',
-        'category',
-    ];
+    protected $fillable = ['title', 'body', 'user_id'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
