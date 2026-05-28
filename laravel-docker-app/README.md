@@ -1,4 +1,6 @@
-# 会員制ブログ
+# Week8 課題 - Laravel認証 + セキュリティ
+
+## 基本課題：会員制ブログ
 
 Laravel Breezeを使った認証機能付きブログアプリです。
 
@@ -8,6 +10,15 @@ Laravel Breezeを使った認証機能付きブログアプリです。
 - 投稿一覧表示（未ログインでも閲覧可能）
 - 投稿作成（ログインユーザーのみ）
 - 投稿編集・削除（自分の投稿のみ）
+
+## 練習課題1：ログイン機能付き掲示板
+
+- 未ログインでも投稿・閲覧可能
+- 自分の投稿のみ削除可能（ログイン必須）
+
+## 練習課題2：セキュリティテスト
+
+`SECURITY_TEST_REPORT.md` を参照してください。
 
 ## セキュリティ対策
 
@@ -56,4 +67,5 @@ npm install && npm run dev
 - `http://localhost/register` - ユーザー登録
 - `http://localhost/login` - ログイン
 - `http://localhost/posts` - ブログ一覧
+- `http://localhost/threads` - 掲示板
 - `http://localhost/dashboard` - ダッシュボード
