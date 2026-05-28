@@ -8,17 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('threads', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('title');
-            $table->text('body');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('name'); // 投稿者名
+            $table->text('body');   // 本文
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('threads');
     }
 };

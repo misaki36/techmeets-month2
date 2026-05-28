@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\ThreadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -19,5 +20,9 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('posts', PostController::class);
 });
+
+// 掲示板は未ログインでも閲覧・投稿可能、削除だけ認証必須
+Route::resource('threads', ThreadController::class)->except(['destroy']);
+Route::delete('/threads/{thread}', [ThreadController::class, 'destroy'])->middleware('auth')->name('threads.destroy');
 
 require __DIR__.'/auth.php';

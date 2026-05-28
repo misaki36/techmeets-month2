@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
-            $table->string('title');        // タイトル
-            $table->text('content');        // 内容
-            $table->string('category');     // カテゴリー
-            $table->timestamps();           // created_at, updated_at
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('title');
+            $table->text('body');
+            $table->timestamps();
         });
     }
 
