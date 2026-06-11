@@ -1,87 +1,33 @@
-# Week 9: Repository/Service パターン リファクタリング
+# Week10 課題 - React + Laravel API連携
 
 ## 概要
-Week 7・8 で作ったブログアプリを Repository/Service パターンでリファクタリングしました。
-また、タスク管理アプリを最初から Repository/Service パターンで構築しました。
-
----
-
-## Before / After 比較
-
-### Before（Fat Controller）
-
-```php
-// PostController.php
-public function index()
-{
-    // コントローラーが直接DBにアクセスしている
-    $posts = Post::with('user')->latest()->get();
-    return view('posts.index', compact('posts'));
-}
-
-public function edit(Post $post)
-{
-    // 認可チェックがコントローラーに直接書かれている
-    // 同じチェックが edit・update・destroy の3箇所に重複している
-    if (Auth::id() !== $post->user_id) {
-        abort(403);
-    }
-    return view('posts.edit', compact('post'));
-}
-```
-
-**問題点**
-- コントローラーが DB 操作・認可チェック・レスポンスを全部担当している
-- 同じ認可チェックが3箇所に重複している
-- ロジックが散らばっていてテストしにくい
-
----
-
-### After（Repository/Service パターン）
-
-```php
-// PostController.php
-public function index()
-{
-    // Service に処理を任せるだけ
-    $posts = $this->postService->getAllPosts();
-    return view('posts.index', compact('posts'));
-}
-
-public function edit(Post $post)
-{
-    // Policy に認可チェックを任せるだけ（1行で済む）
-    $this->authorize('update', $post);
-    return view('posts.edit', compact('post'));
-}
-```
-
-**改善点**
-- コントローラーは「受け取って渡す」交通整理に専念
-- 認可ルールは PostPolicy に一元管理
-- DB操作は PostRepository に集約
-- ビジネスロジックは PostService に集約
-
----
-
-## 各層の役割
-
-| 層 | クラス | 役割 |
-|---|---|---|
-| Controller | PostController | リクエストを受け取り、Service に渡すだけ |
-| Service | PostService | ビジネスロジックを担当 |
-| Repository | PostRepository | DB操作だけを担当 |
-| Policy | PostPolicy | 認可ルールを一元管理 |
-
----
+Vite + Reactで作成したフロントエンドから、LaravelのREST APIを呼び出してタスクの一覧表示・新規作成を行うアプリです。
 
 ## 機能一覧
+- タスク一覧表示（Laravel APIからaxiosで取得）
+- タスク新規作成（POSTリクエストでLaravelに送信）
+- 完了/未完了の表示
 
-### ブログアプリ
-- 投稿の一覧・作成・編集・削除
-- 自分の投稿のみ編集・削除可能（Policy で制御）
+## コンポーネント構成
+- `App.jsx` - 全体のデータ管理・各コンポーネントの呼び出し
+- `TaskForm.jsx` - フォームの入力と送信
+- `TaskCard.jsx` - タスク1件の表示
 
-### タスク管理アプリ
-- タスクの一覧・作成・編集・削除
-- タスクの完了/未完了の切り替え
-- 自分のタスクのみ編集・削除・切り替え可能（Policy で制御）
+## コンポーネント分割の理由
+App・TaskForm・TaskCardの3つに分割した。Appは全体のデータ管理と各コンポーネントの呼び出しを担当し、TaskFormはフォームの入力と送信のみ、TaskCardはタスク1件の表示のみを担当する。役割を分けることで、修正が必要なときに該当ファイルだけを見ればよく、同じカードを別のページで使い回すことも容易になる。
+
+## セットアップ手順
+
+### バックエンド
+cd laravel-docker-app
+docker compose up -d
+
+### フロントエンド
+cd my-frontend
+npm install
+npm run dev
+
+## 利用可能なURL
+- `http://localhost:5173` - タスク一覧・新規作成
+- `http://localhost/api/tasks` - タスク一覧API（GET）
+- `http://localhost/api/tasks/{id}` - タスク1件API（GET）
