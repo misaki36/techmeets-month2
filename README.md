@@ -1,49 +1,87 @@
-# Week8 課題 - Laravel認証 + セキュリティ
+# Week 9: Repository/Service パターン リファクタリング
 
 ## 概要
-Laravel Breezeを使った認証機能付きの会員制ブログと掲示板アプリです。
+Week 7・8 で作ったブログアプリを Repository/Service パターンでリファクタリングしました。
+また、タスク管理アプリを最初から Repository/Service パターンで構築しました。
 
-## 基本課題：会員制ブログ
+---
 
-### 機能一覧
-- ユーザー登録・ログイン・ログアウト（Laravel Breeze）
-- 投稿一覧表示（未ログインでも閲覧可能）
-- 投稿作成（ログインユーザーのみ）
-- 投稿編集・削除（自分の投稿のみ）
+## Before / After 比較
 
-### セキュリティ対策
-- XSS対策：Bladeの `{{ }}` による自動エスケープ
-- CSRF対策：`@csrf` トークンをフォームに設置
-- SQLインジェクション対策：EloquentによるORMを使用
-- 認証：Laravel Breezeによるセッション管理
-- 認可：自分の投稿以外は編集・削除不可（403エラー）
+### Before（Fat Controller）
 
-## 練習課題1：ログイン機能付き掲示板
+```php
+// PostController.php
+public function index()
+{
+    // コントローラーが直接DBにアクセスしている
+    $posts = Post::with('user')->latest()->get();
+    return view('posts.index', compact('posts'));
+}
 
-### 機能一覧
-- 投稿一覧表示（未ログインでも閲覧可能）
-- 投稿作成（未ログインでも可能・匿名投稿）
-- 投稿削除（自分の投稿のみ・ログイン必須）
-
-## 練習課題2：セキュリティテスト
-詳細は `laravel-docker-app/SECURITY_TEST_REPORT.md` を参照してください。
-
-## セットアップ手順
-
-```bash
-cd laravel-docker-app
-docker compose up -d
-cd src
-composer install
-cp .env.example .env
-docker compose exec app php artisan key:generate
-docker compose exec app php artisan migrate
-npm install && npm run dev
+public function edit(Post $post)
+{
+    // 認可チェックがコントローラーに直接書かれている
+    // 同じチェックが edit・update・destroy の3箇所に重複している
+    if (Auth::id() !== $post->user_id) {
+        abort(403);
+    }
+    return view('posts.edit', compact('post'));
+}
 ```
 
-## 利用可能なURL
-- `http://localhost/register` - ユーザー登録
-- `http://localhost/login` - ログイン
-- `http://localhost/posts` - ブログ一覧
-- `http://localhost/threads` - 掲示板
-- `http://localhost/dashboard` - ダッシュボード
+**問題点**
+- コントローラーが DB 操作・認可チェック・レスポンスを全部担当している
+- 同じ認可チェックが3箇所に重複している
+- ロジックが散らばっていてテストしにくい
+
+---
+
+### After（Repository/Service パターン）
+
+```php
+// PostController.php
+public function index()
+{
+    // Service に処理を任せるだけ
+    $posts = $this->postService->getAllPosts();
+    return view('posts.index', compact('posts'));
+}
+
+public function edit(Post $post)
+{
+    // Policy に認可チェックを任せるだけ（1行で済む）
+    $this->authorize('update', $post);
+    return view('posts.edit', compact('post'));
+}
+```
+
+**改善点**
+- コントローラーは「受け取って渡す」交通整理に専念
+- 認可ルールは PostPolicy に一元管理
+- DB操作は PostRepository に集約
+- ビジネスロジックは PostService に集約
+
+---
+
+## 各層の役割
+
+| 層 | クラス | 役割 |
+|---|---|---|
+| Controller | PostController | リクエストを受け取り、Service に渡すだけ |
+| Service | PostService | ビジネスロジックを担当 |
+| Repository | PostRepository | DB操作だけを担当 |
+| Policy | PostPolicy | 認可ルールを一元管理 |
+
+---
+
+## 機能一覧
+
+### ブログアプリ
+- 投稿の一覧・作成・編集・削除
+- 自分の投稿のみ編集・削除可能（Policy で制御）
+
+### タスク管理アプリ
+- タスクの一覧・作成・編集・削除
+- タスクの完了/未完了の切り替え
+- 自分のタスクのみ編集・削除・切り替え可能（Policy で制御）
