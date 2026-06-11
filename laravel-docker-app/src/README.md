@@ -1,59 +1,101 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Week 9: Repository/Service パターン リファクタリング
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 概要
+Week 7・8 で作ったブログアプリを Repository/Service パターンでリファクタリングしました。
+また、タスク管理アプリを最初から Repository/Service パターンで構築しました。
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Before / After 比較
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Before（Fat Controller）
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```php
+// PostController.php
+public function index()
+{
+    // コントローラーが直接DBにアクセスしている
+    $posts = Post::with('user')->latest()->get();
+    return view('posts.index', compact('posts'));
+}
 
-## Learning Laravel
+public function edit(Post $post)
+{
+    // 認可チェックがコントローラーに直接書かれている
+    // 同じチェックが edit・update・destroy の3箇所に重複している
+    if (Auth::id() !== $post->user_id) {
+        abort(403);
+    }
+    return view('posts.edit', compact('post'));
+}
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**問題点**
+- コントローラーが DB 操作・認可チェック・レスポンスを全部担当している
+- 同じ認可チェックが3箇所に重複している
+- ロジックが散らばっていてテストしにくい
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+### After（Repository/Service パターン）
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```php
+// PostController.php
+public function index()
+{
+    // Service に処理を任せるだけ
+    $posts = $this->postService->getAllPosts();
+    return view('posts.index', compact('posts'));
+}
 
-### Premium Partners
+public function edit(Post $post)
+{
+    // Policy に認可チェックを任せるだけ（1行で済む）
+    $this->authorize('update', $post);
+    return view('posts.edit', compact('post'));
+}
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**改善点**
+- コントローラーは「受け取って渡す」交通整理に専念
+- 認可ルールは PostPolicy に一元管理
+- DB操作は PostRepository に集約
+- ビジネスロジックは PostService に集約
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## ファイル構成
+    app/
+    ├── Http/Controllers/
+    │   ├── PostController.php  # 薄いコントローラー
+    │   └── TaskController.php  # 薄いコントローラー
+    ├── Repositories/
+    │   ├── PostRepository.php  # DB操作を担当
+    │   └── TaskRepository.php  # DB操作を担当
+    ├── Services/
+    │   ├── PostService.php     # ビジネスロジックを担当
+    │   └── TaskService.php     # ビジネスロジックを担当
+    └── Policies/
+        ├── PostPolicy.php      # 認可ルールを担当
+        └── TaskPolicy.php      # 認可ルールを担当
+## 各層の役割
 
-## Code of Conduct
+| 層 | クラス | 役割 |
+|---|---|---|
+| Controller | PostController | リクエストを受け取り、Service に渡すだけ |
+| Service | PostService | ビジネスロジックを担当 |
+| Repository | PostRepository | DB操作だけを担当 |
+| Policy | PostPolicy | 認可ルールを一元管理 |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 機能一覧
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### ブログアプリ
+- 投稿の一覧・作成・編集・削除
+- 自分の投稿のみ編集・削除可能（Policy で制御）
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### タスク管理アプリ
+- タスクの一覧・作成・編集・削除
+- タスクの完了/未完了の切り替え
+- 自分のタスクのみ編集・削除・切り替え可能（Policy で制御）
