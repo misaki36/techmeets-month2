@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ItemController;
+use App\Http\Controllers\StripeWebhookController;
+
+Route::post('/webhook/stripe', [StripeWebhookController::class, 'handle']);
 
 // タスク一覧取得
 Route::get('/tasks', [ItemController::class, 'index']);

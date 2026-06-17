@@ -31,3 +31,21 @@ Route::resource('threads', ThreadController::class)->except(['destroy']);
 Route::delete('/threads/{thread}', [ThreadController::class, 'destroy'])->middleware('auth')->name('threads.destroy');
 
 require __DIR__.'/auth.php';
+
+use App\Http\Controllers\CheckoutController;
+
+Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout.create');
+Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/cancel', fn() => view('checkout.cancel'))->name('checkout.cancel');
+
+use App\Mail\WelcomeMail;
+use Illuminate\Support\Facades\Mail;
+
+// SendGridの動作確認用ルート（テスト後に削除してOK）
+Route::get('/test-mail', function () {
+    Mail::to('mi03ki06@gmail.com')->send(new WelcomeMail('テストユーザー'));
+    return 'メール送信完了！';
+});
+
+use App\Http\Controllers\StripeWebhookController;
+

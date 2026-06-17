@@ -1,33 +1,36 @@
-# Week10 課題 - React + Laravel API連携
+# Week12 課題 - 外部API連携（Stripe決済 / SendGridメール / Webhook）
 
 ## 概要
-Vite + Reactで作成したフロントエンドから、LaravelのREST APIを呼び出してタスクの一覧表示・新規作成を行うアプリです。
+Laravelアプリに外部のWebサービス（Stripe・SendGrid）を組み込み、決済機能とメール送信機能を実装した。あわせてStripeのWebhookを使った非同期イベント処理も実装した。
 
 ## 機能一覧
-- タスク一覧表示（Laravel APIからaxiosで取得）
-- タスク新規作成（POSTリクエストでLaravelに送信）
-- 完了/未完了の表示
 
-## コンポーネント構成
-- `App.jsx` - 全体のデータ管理・各コンポーネントの呼び出し
-- `TaskForm.jsx` - フォームの入力と送信
-- `TaskCard.jsx` - タスク1件の表示
+### 基本課題：Stripeテスト決済機能
+- Stripe Checkout Sessionを使った決済フロー（商品ページ→カード入力→完了ページ）
+- テストカード番号（4242 4242 4242 4242）で決済が通ることを確認
+- 決済完了後、購入履歴をLaravelのDB（purchasesテーブル）に保存
 
-## コンポーネント分割の理由
-App・TaskForm・TaskCardの3つに分割した。Appは全体のデータ管理と各コンポーネントの呼び出しを担当し、TaskFormはフォームの入力と送信のみ、TaskCardはタスク1件の表示のみを担当する。役割を分けることで、修正が必要なときに該当ファイルだけを見ればよく、同じカードを別のページで使い回すことも容易になる。
+### 練習課題1：SendGridで会員登録メールを送信する
+- SendGrid経由でのウェルカムメール送信
+- Mailableクラス（WelcomeMail）による本文・件名の管理
+
+### 練習課題2：Stripe Webhookで決済完了を処理する
+- Stripe Webhookによる決済完了イベント（payment_intent.succeeded）の受信
+- 署名検証（`Webhook::constructEvent()`）の実装
+- 決済完了時にLaravelのログへ決済IDを記録
 
 ## セットアップ手順
 
 ### バックエンド
+```
 cd laravel-docker-app
 docker compose up -d
+```
 
-### フロントエンド
-cd my-frontend
-npm install
-npm run dev
+詳しい環境変数の設定・テスト方法は`laravel-docker-app/README.md`を参照してください。
 
 ## 利用可能なURL
-- `http://localhost:5173` - タスク一覧・新規作成
-- `http://localhost/api/tasks` - タスク一覧API（GET）
-- `http://localhost/api/tasks/{id}` - タスク1件API（GET）
+- `http://localhost/checkout` - 決済開始（Stripeにリダイレクト）
+- `http://localhost/checkout/success` - 決済完了画面
+- `http://localhost/checkout/cancel` - 決済キャンセル画面
+- `http://localhost/api/webhook/stripe` - Stripe Webhook受信エンドポイント（POST）
