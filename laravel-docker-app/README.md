@@ -1,108 +1,77 @@
-# Week12 課題 - 外部API連携（Stripe決済 / SendGridメール / Webhook）
+# Week14 課題 - テスト設計 + 品質管理
 
 ## 概要
-Laravelアプリに外部のWebサービス（Stripe・SendGrid）を組み込み、決済機能とメール送信機能を実装した。あわせてStripeのWebhookを使った非同期イベント処理も実装した。
+LaravelアプリにPHPUnitを導入し、ユニットテスト・Feature Test・境界値テスト・TDDを実践した。あわせてXdebugによるコードカバレッジの測定も行った。
 
 ## 機能一覧
 
-### 基本課題：Stripeテスト決済機能
-- Stripe Checkout Sessionを使った決済フロー（商品ページ→カード入力→完了ページ）
-- テストカード番号（4242 4242 4242 4242）で決済が通ることを確認
-- 決済完了後、購入履歴をLaravelのDB（purchasesテーブル）に保存
+**基本課題：テストコード作成**
+- `PriceCalculator` クラスを使ったユニットテスト（正常系・異常系）
+- 境界値テスト（割引率0%・100%・-1%・101%など）
+- 投稿機能（Post）のFeature Test（CRUD・認証・認可・バリデーション）
+- タスク機能（Task）のFeature Test（CRUD・認証・認可・toggle）
+- Xdebugを使ったコードカバレッジの測定
 
-### 練習課題1：SendGridで会員登録メールを送信する
-- SendGrid経由でのウェルカムメール送信
-- Mailableクラス（WelcomeMail）による本文・件名の管理
+**練習課題1：ユニットテスト**
+- `PriceCalculator` サービスクラスの正常系・異常系・境界値テスト
+- AAAパターン（Arrange・Act・Assert）でテストを構造化
 
-### 練習課題2：Stripe Webhookで決済完了を処理する
-- Stripe Webhookによる決済完了イベント（payment_intent.succeeded）の受信
-- 署名検証（`Webhook::constructEvent()`）の実装
-- 決済完了時にLaravelのログへ決済IDを記録
+**練習課題2：Feature Test**
+- 投稿・タスクのCRUD操作のFeature Test
+- 認証（未ログインユーザーのアクセス拒否）のテスト
+- 認可（他ユーザーのデータ操作禁止）のテスト
+
+**練習課題3：TDD実践**
+- いいね機能（`PostLike`）をTDD（Red→Green→Refactor）で実装
+- テストを先に書いてから実装する開発フローを体験
 
 ## 実装したファイル
-- `src/app/Http/Controllers/CheckoutController.php` - Stripe Checkout Sessionの作成・決済完了後のDB保存処理
-- `src/app/Http/Controllers/StripeWebhookController.php` - Webhook受信・署名検証・イベント処理
-- `src/app/Mail/WelcomeMail.php` - SendGridで送るウェルカムメールのMailableクラス
-- `src/app/Models/Purchase.php` - 購入履歴を保存するモデル
-- `src/database/migrations/xxxx_create_purchases_table.php` - purchasesテーブルのマイグレーション
-- `src/resources/views/checkout/` - 決済完了・キャンセル画面
-- `src/resources/views/emails/welcome.blade.php` - ウェルカムメールのテンプレート
-- `src/routes/api.php` - Webhook受信エンドポイント（CSRF対象外にするためapi.phpに配置）
-- `src/routes/web.php` - 決済関連のルート（/checkout, /checkout/success, /checkout/cancel）
+
+- `src/app/Services/PriceCalculator.php` - 税込計算・割引計算のサービスクラス（テスト対象）
+- `src/app/Models/PostLike.php` - いいね機能のモデル
+- `src/database/migrations/xxxx_create_post_likes_table.php` - post_likesテーブルのマイグレーション
+- `src/database/factories/PostFactory.php` - テスト用投稿ダミーデータ
+- `src/database/factories/TaskFactory.php` - テスト用タスクダミーデータ
+- `src/tests/Unit/PriceCalculatorTest.php` - ユニットテスト（正常系・異常系）
+- `src/tests/Unit/PriceCalculatorBoundaryTest.php` - 境界値テスト
+- `src/tests/Unit/PostLikesTest.php` - いいね機能のユニットテスト（TDD）
+- `src/tests/Feature/PostTest.php` - 投稿機能のFeature Test
+- `src/tests/Feature/TaskTest.php` - タスク機能のFeature Test
 
 ## 学んだこと・つまったポイント
-- Stripe CheckoutはStripe側のページにリダイレクトする方式のため、カード番号が自分のサーバーを通らずセキュリティ面の責任範囲が小さくなる。
-- SendGridでは送信元メールアドレスを事前に「Single Sender Verification」で認証する必要があり、`.env`の`MAIL_FROM_ADDRESS`と認証済みアドレスが一致していないと550エラー（Sender Identity未認証）になる。
-- StripeのWebhookは署名検証が必須。検証用のシークレットキー（`whsec_...`）は`stripe listen`実行時に発行され、`STRIPE_WEBHOOK_SECRET`として`.env`に登録する。
-- Webhook用のルートは`routes/web.php`に書くとCSRFトークンエラー（419）になるため、CSRF検証対象外の`routes/api.php`に書く必要がある。
-- ローカル開発環境（Docker）で`php artisan serve`を使うと、DBのホスト名（`DB_HOST=db`）がDocker内部のホスト名のため接続できない。Dockerコンテナ内（Nginx経由のhttp://localhost）でアクセスするか、artisanコマンドを`docker exec`でコンテナ内から実行する必要がある。
 
-## セキュリティ対策
-- APIキー（Stripe・SendGrid）は`.env`にのみ記載し、`.gitignore`でGit管理対象から除外
-- `.env.example`にはキー名のみを記載し、値はコミットしない
-- Webhookは署名検証によって、Stripe以外からの偽リクエストを拒否
+- `pestphp/pest` がPHP 8.3以上を要求していたため、PHP 8.2環境では `phpunit/phpunit` に切り替える必要があった
+- `Post` モデルと `Task` モデルに `use HasFactory` が記述されていなかったため `factory()` が使えずエラーになった。モデルに `HasFactory` トレイトを追加することで解決した
+- コードカバレッジの測定にはXdebugが必要で、`pecl install xdebug` でインストールし `php.ini` に設定を追加した
+- `tests/Feature/Auth/` や `tests/Feature/ProfileTest.php` がPest形式で書かれていたため、PHPUnitに切り替えた際にエラーになった。該当ファイルを削除することで解決した
+- TDDでは先にテストを書いて意図的にRedにしてから実装することで、「何を実装すべきか」が明確になった
 
 ## セットアップ手順
 
-### 1. Dockerの起動
 ```bash
 cd laravel-docker-app
 docker compose up -d
+docker compose exec app bash
+php artisan migrate
+php artisan test
 ```
 
-### 2. 環境変数の設定
-`src/.env`に以下を設定（値は各自のAPIキー・テストモードのものを使用）
-```
-STRIPE_KEY=pk_test_xxxxx
-STRIPE_SECRET=sk_test_xxxxx
-STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+## テスト実行結果## 実装したテスト一覧
 
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.sendgrid.net
-MAIL_PORT=587
-MAIL_USERNAME=apikey
-MAIL_PASSWORD=SG.xxxxx
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=認証済みの送信元メールアドレス
-MAIL_FROM_NAME="${APP_NAME}"
-```
-
-### 3. マイグレーションの実行
-```bash
-docker exec -it laravel-docker-app-app-1 php artisan migrate
-```
-
-### 4. Webhookのローカル転送（別ターミナルで起動したままにする）
-```bash
-stripe login
-stripe listen --forward-to localhost/api/webhook/stripe
-```
-
-## 利用可能なURL
-- `http://localhost/checkout` - 決済開始（Stripeにリダイレクト）
-- `http://localhost/checkout/success` - 決済完了画面
-- `http://localhost/checkout/cancel` - 決済キャンセル画面
-- `http://localhost/api/webhook/stripe` - Stripe Webhook受信エンドポイント（POST）
-- `http://localhost:8080` - phpMyAdmin（DB確認用）
-
-## テスト方法
-
-### 決済テスト
-1. `http://localhost/checkout` にアクセス
-2. テストカード番号 `4242 4242 4242 4242`（有効期限：任意の未来日／CVC：任意の3桁）で決済
-3. phpMyAdminで`purchases`テーブルに購入履歴が保存されていることを確認
-
-### Webhookテスト
-```bash
-stripe trigger payment_intent.succeeded
-```
-`storage/logs/laravel.log`に「決済完了: pi_xxxxx」のログが記録されることを確認
+| ファイル | テスト数 | 内容 |
+|---|---|---|
+| `PriceCalculatorTest` | 5個 | 正常系・異常系 |
+| `PriceCalculatorBoundaryTest` | 7個 | 境界値テスト |
+| `PostTest` | 9個 | CRUD・認証・認可・バリデーション |
+| `TaskTest` | 8個 | CRUD・認証・認可・toggle |
+| `PostLikesTest` | 4個 | TDD（Red→Green→Refactor） |
+| **合計** | **33個** | |
 
 ## 使用技術
-- PHP 8.5
+
+- PHP 8.2
 - Laravel 12
+- PHPUnit 11.5
+- Xdebug 3.5
 - MySQL 8.0
-- Nginx
 - Docker / Docker Compose
-- Stripe（決済API）
-- SendGrid（メール送信API）
