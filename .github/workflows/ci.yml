@@ -8,10 +8,8 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-# 実行する作業の定義
 jobs:
   test:
-    # どの環境で動かすか（GitHubが用意するUbuntuサーバー）
     runs-on: ubuntu-latest
     
     steps:
@@ -26,17 +24,19 @@ jobs:
           php-version: '8.3'
           extensions: mbstring, xml, ctype, json, pdo, mysql
       
-      # ステップ3: composerでLaravelの依存パッケージをインストール
-      # --working-dir=src はsrcフォルダ内で実行するオプション
+      # ステップ3: laravel-docker-app/src に移動してcomposerを実行
       - name: Composerの依存関係をインストール
-        run: composer install --prefer-dist --no-progress --working-dir=src
+        run: composer install --prefer-dist --no-progress
+        working-directory: laravel-docker-app/src
       
       # ステップ4: .envファイルを作成してアプリキーを生成
       - name: .envファイルの作成
         run: |
-          cp src/.env.example src/.env
-          cd src && php artisan key:generate
+          cp .env.example .env
+          php artisan key:generate
+        working-directory: laravel-docker-app/src
       
       # ステップ5: テストを実行
       - name: テスト実行
-        run: cd src && php artisan test
+        run: php artisan test
+        working-directory: laravel-docker-app/src
