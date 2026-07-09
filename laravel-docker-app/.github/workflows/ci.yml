@@ -1,0 +1,42 @@
+# このワークフロー全体の名前
+name: CI
+
+# いつ実行するか：main/developブランチへのpushかPR作成時
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+# 実行する作業の定義
+jobs:
+  test:
+    # どの環境で動かすか（GitHubが用意するUbuntuサーバー）
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ステップ1: リポジトリのコードをダウンロード
+      - name: チェックアウト
+        uses: actions/checkout@v4
+      
+      # ステップ2: PHPをインストール
+      - name: PHP環境のセットアップ
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, json, pdo, mysql
+      
+      # ステップ3: composerでLaravelの依存パッケージをインストール
+      # --working-dir=src はsrcフォルダ内で実行するオプション
+      - name: Composerの依存関係をインストール
+        run: composer install --prefer-dist --no-progress --working-dir=src
+      
+      # ステップ4: .envファイルを作成してアプリキーを生成
+      - name: .envファイルの作成
+        run: |
+          cp src/.env.example src/.env
+          cd src && php artisan key:generate
+      
+      # ステップ5: テストを実行
+      - name: テスト実行
+        run: cd src && php artisan test
