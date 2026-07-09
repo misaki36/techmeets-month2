@@ -10,7 +10,8 @@ class TaskService
     // LaravelがTaskRepositoryを自動で渡してくれる（依存性注入）
     public function __construct(
         private TaskRepository $taskRepository
-    ) {}
+    ) {
+    }
 
     // ログインユーザーのタスクを全件取得
     public function getAllTasks(int $userId)

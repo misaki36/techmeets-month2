@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ThreadController;
 use Illuminate\Support\Facades\Route;
@@ -36,7 +36,7 @@ use App\Http\Controllers\CheckoutController;
 
 Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout.create');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/cancel', fn() => view('checkout.cancel'))->name('checkout.cancel');
+Route::get('/checkout/cancel', fn () => view('checkout.cancel'))->name('checkout.cancel');
 
 use App\Mail\WelcomeMail;
 use Illuminate\Support\Facades\Mail;
@@ -46,6 +46,3 @@ Route::get('/test-mail', function () {
     Mail::to('mi03ki06@gmail.com')->send(new WelcomeMail('テストユーザー'));
     return 'メール送信完了！';
 });
-
-use App\Http\Controllers\StripeWebhookController;
-

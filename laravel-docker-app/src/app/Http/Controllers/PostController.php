@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
-use App\Services\PostService;
 use App\Repositories\PostRepository;
+use App\Services\PostService;
 use Illuminate\Http\Request;
 
 // リクエストを受け取って、ServiceやRepositoryに処理を任せるだけのクラス
@@ -15,7 +15,8 @@ class PostController extends Controller
     public function __construct(
         private PostService $postService,
         private PostRepository $postRepository
-    ) {}
+    ) {
+    }
 
     // 投稿一覧を表示
     public function index()

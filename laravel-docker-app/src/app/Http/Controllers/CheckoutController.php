@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Purchase;
 use Illuminate\Http\Request;
-use Stripe\Stripe;
 use Stripe\Checkout\Session;
-use App\Models\Purchase; // Purchaseモデルを使えるようにインポート
+use Stripe\Stripe; // Purchaseモデルを使えるようにインポート
 
 class CheckoutController extends Controller
 {

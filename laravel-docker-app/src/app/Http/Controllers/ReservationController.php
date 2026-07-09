@@ -34,7 +34,11 @@ class ReservationController extends Controller
         ]);
 
         Reservation::create($request->only(
-            'event_id', 'name', 'email', 'number_of_people', 'reserved_at'
+            'event_id',
+            'name',
+            'email',
+            'number_of_people',
+            'reserved_at'
         ));
 
         return redirect()->route('reservations.index')->with('success', '予約しました！');
@@ -48,7 +52,13 @@ class ReservationController extends Controller
     }
 
     // 使わないメソッド
-    public function show(Reservation $reservation) {}
-    public function edit(Reservation $reservation) {}
-    public function update(Request $request, Reservation $reservation) {}
+    public function show(Reservation $reservation)
+    {
+    }
+    public function edit(Reservation $reservation)
+    {
+    }
+    public function update(Request $request, Reservation $reservation)
+    {
+    }
 }

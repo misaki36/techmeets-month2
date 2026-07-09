@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Task;
-use App\Http\Resources\TaskResource; // TaskResourceを読み込む
+use App\Http\Resources\TaskResource;
+use App\Models\Task; // TaskResourceを読み込む
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -24,18 +24,18 @@ class ItemController extends Controller
     }
 
     public function store(Request $request)
-{
-    // バリデーション：titleは必須、bodyは任意
-    $validated = $request->validate([
-        'title'   => 'required|string|max:255', // 必須・文字列・255文字以内
-        'body'    => 'nullable|string',          // 任意・文字列
-        'user_id' => 'required|integer',         // 必須・整数
-    ]);
+    {
+        // バリデーション：titleは必須、bodyは任意
+        $validated = $request->validate([
+            'title'   => 'required|string|max:255', // 必須・文字列・255文字以内
+            'body'    => 'nullable|string',          // 任意・文字列
+            'user_id' => 'required|integer',         // 必須・整数
+        ]);
 
-    // バリデーションを通過したデータでタスクを作成
-    $task = Task::create($validated);
+        // バリデーションを通過したデータでタスクを作成
+        $task = Task::create($validated);
 
-    // 作成したタスクをTaskResourceで返す
-    return new TaskResource($task);
-}
+        // 作成したタスクをTaskResourceで返す
+        return new TaskResource($task);
+    }
 }

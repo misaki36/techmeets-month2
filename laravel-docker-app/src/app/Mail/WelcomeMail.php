@@ -12,12 +12,15 @@ use Illuminate\Queue\SerializesModels;
 // このクラスを使ってメールの件名・本文・送信先などを設定する
 class WelcomeMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     // コンストラクタ = このクラスを呼び出すときに渡す値を定義する
     // $userName = メールに表示するユーザー名
     // public にすることでビュー（メールのテンプレート）からも使える
-    public function __construct(public string $userName) {}
+    public function __construct(public string $userName)
+    {
+    }
 
     // envelope() = メールの「封筒」部分を定義する
     // 件名（subject）を設定する
