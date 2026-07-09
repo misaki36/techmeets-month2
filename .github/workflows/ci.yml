@@ -21,7 +21,7 @@ jobs:
       - name: PHP環境のセットアップ
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, json, pdo, mysql
       
       # ステップ3: laravel-docker-app/src に移動してcomposerを実行
@@ -39,4 +39,4 @@ jobs:
       # ステップ5: テストを実行
       - name: テスト実行
         run: php artisan test
-        working-directory: laravel-docker-app/src
+        working-directory: laravel-docker-app/src 
