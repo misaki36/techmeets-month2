@@ -3,7 +3,7 @@
         'name' => 'laravel/laravel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '1245cd002b4f9b3844041723971a7365cd1da665',
+        'reference' => '9b7e0abd069fc6f8e24eb0d9d9ae8a312795f4ca',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -238,6 +238,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'iamcal/sql-parser' => array(
+            'pretty_version' => 'v0.7',
+            'version' => '0.7.0.0',
+            'reference' => '610392f38de49a44dab08dc1659960a29874c4b8',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../iamcal/sql-parser',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
         'illuminate/auth' => array(
             'dev_requirement' => false,
             'replaced' => array(
@@ -460,6 +469,15 @@
                 0 => '*',
             ),
         ),
+        'larastan/larastan' => array(
+            'pretty_version' => 'v3.10.0',
+            'version' => '3.10.0.0',
+            'reference' => '2970f83398154178a739609c244577267c7ee8eb',
+            'type' => 'phpstan-extension',
+            'install_path' => __DIR__ . '/../larastan/larastan',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
         'laravel/breeze' => array(
             'pretty_version' => 'v2.4.2',
             'version' => '2.4.2.0',
@@ -481,7 +499,7 @@
         'laravel/laravel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '1245cd002b4f9b3844041723971a7365cd1da665',
+            'reference' => '9b7e0abd069fc6f8e24eb0d9d9ae8a312795f4ca',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -717,6 +735,15 @@
             'install_path' => __DIR__ . '/../phpoption/phpoption',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'phpstan/phpstan' => array(
+            'pretty_version' => '2.2.5',
+            'version' => '2.2.5.0',
+            'reference' => '909c1e5fef7989ac0d0c1c5c42e32a5c4f6198a0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../phpstan/phpstan',
+            'aliases' => array(),
+            'dev_requirement' => true,
         ),
         'phpunit/php-code-coverage' => array(
             'pretty_version' => '11.0.12',

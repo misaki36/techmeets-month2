@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 3
+    paths:
+        - app
+        - routes
+    excludePaths:
+        - storage
+        - vendor
+    # 既知のエラーを無視する設定
+    ignoreErrors:
+        - '#Relation .* is not found in App\\Models#'
+        - '#Access to an undefined property App\\Http\\Resources\\TaskResource#'
