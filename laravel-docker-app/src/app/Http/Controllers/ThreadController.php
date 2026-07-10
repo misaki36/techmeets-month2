@@ -44,7 +44,13 @@ class ThreadController extends Controller
         return redirect()->route('threads.index')->with('success', '削除しました！');
     }
 
-    public function show(Thread $thread) {}
-    public function edit(Thread $thread) {}
-    public function update(Request $request, Thread $thread) {}
-} 
+    public function show(Thread $thread)
+    {
+    }
+    public function edit(Thread $thread)
+    {
+    }
+    public function update(Request $request, Thread $thread)
+    {
+    }
+}

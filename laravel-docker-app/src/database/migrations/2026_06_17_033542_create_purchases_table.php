@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Schema;
 // Migrationクラスを継承した無名クラス
 // マイグレーション = 「DBのテーブルをコードで管理する仕組み」
 // このファイルを実行すると purchases テーブルが作られる
-return new class extends Migration
-{
+return new class () extends Migration {
     // up() = マイグレーション実行時に呼ばれる（テーブルを作る処理）
     // php artisan migrate を実行したときに動く
     public function up(): void

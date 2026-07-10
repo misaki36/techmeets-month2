@@ -6,7 +6,7 @@ class PriceCalculator
 {
     /**
      * 税込合計金額を計算する
-     * 
+     *
      * @param int $price 単価
      * @param int $quantity 数量
      * @param float $taxRate 税率（デフォルト10%）
@@ -31,7 +31,7 @@ class PriceCalculator
 
     /**
      * 割引後の価格を計算する
-     * 
+     *
      * @param int $price 元の価格
      * @param int $discountPercent 割引率（0〜100）
      * @return int 割引後の価格

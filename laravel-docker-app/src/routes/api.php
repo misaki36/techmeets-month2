@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\StripeWebhookController;
+use Illuminate\Support\Facades\Route;
 
 Route::post('/webhook/stripe', [StripeWebhookController::class, 'handle']);
 

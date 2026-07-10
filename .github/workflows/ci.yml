@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # ジョブ1: コード品質チェック
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: PHP環境のセットアップ
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, ctype, json, pdo, mysql
+
+      - name: Composerの依存関係をインストール
+        run: composer install --prefer-dist --no-progress
+        working-directory: laravel-docker-app/src
+
+      # PHP CS Fixerでコードスタイルをチェック（修正はしない）
+      - name: PHP CS Fixerチェック
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+        working-directory: laravel-docker-app/src
+
+      # PHPStanで静的解析
+      - name: PHPStanチェック
+        run: vendor/bin/phpstan analyse --memory-limit=256M
+        working-directory: laravel-docker-app/src
+
+  # ジョブ2: テスト（lintが通った後に実行）
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: PHP環境のセットアップ
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, ctype, json, pdo, mysql
+
+      - name: Composerの依存関係をインストール
+        run: composer install --prefer-dist --no-progress
+        working-directory: laravel-docker-app/src
+
+      - name: .envファイルの作成
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+        working-directory: laravel-docker-app/src
+
+      - name: テスト実行
+        run: php artisan test
+        working-directory: laravel-docker-app/src

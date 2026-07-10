@@ -10,7 +10,8 @@ class PostService
     // LaravelがPostRepositoryを自動で渡してくれる（依存性注入）
     public function __construct(
         private PostRepository $postRepository
-    ) {}
+    ) {
+    }
 
     // 全件取得をRepositoryに依頼
     public function getAllPosts()

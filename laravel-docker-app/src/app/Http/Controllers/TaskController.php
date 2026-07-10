@@ -12,7 +12,8 @@ class TaskController extends Controller
     // LaravelがTaskServiceを自動で渡してくれる（依存性注入）
     public function __construct(
         private TaskService $taskService
-    ) {}
+    ) {
+    }
 
     // タスク一覧を表示
     public function index()

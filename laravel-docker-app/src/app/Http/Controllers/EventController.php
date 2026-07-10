@@ -42,7 +42,13 @@ class EventController extends Controller
     }
 
     // 使わないメソッドはそのまま
-    public function edit(Event $event) {}
-    public function update(Request $request, Event $event) {}
-    public function destroy(Event $event) {}
+    public function edit(Event $event)
+    {
+    }
+    public function update(Request $request, Event $event)
+    {
+    }
+    public function destroy(Event $event)
+    {
+    }
 }
