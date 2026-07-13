@@ -39,6 +39,6 @@ jobs:
       - name: ビルドしてDocker Hubにpush
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./laravel-docker-app
           push: true
           tags: ${{ steps.meta.outputs.tags }}
