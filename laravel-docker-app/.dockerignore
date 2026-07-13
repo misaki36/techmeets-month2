@@ -1,0 +1,39 @@
+# Gitの管理ファイル（イメージには不要）
+.git
+.gitignore
+
+# PHPの依存関係（ビルド時に入れるので不要）
+vendor
+
+# Node.jsの依存関係（ビルド時に入れるので不要）
+node_modules
+
+# 環境設定ファイル（秘密情報が入っているので含めない）
+.env
+.env.*
+
+# テスト関連（本番イメージには不要）
+tests
+.phpunit.cache
+
+# ログファイル（不要）
+storage/logs/*
+
+# 開発用ビルドファイル（不要）
+public/hot
+public/build
+
+# IDEの設定ファイル（不要）
+.vscode
+.idea
+
+# Macが自動生成するファイル（不要）
+.DS_Store
+
+# ドキュメント（不要）
+README.md
+
+# Docker関連ファイル自体（不要）
+docker-compose.yml
+docker-compose.prod.yml
+Dockerfile
