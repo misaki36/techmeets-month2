@@ -1,0 +1,40 @@
+# Docker Compose設定ファイル（開発・本番共通のログ設定）
+services:
+  app:
+    # Docker Hubのイメージを使用（タグで切り替え可能）
+    image: kuwamisa/techmeets:${IMAGE_TAG:-latest}
+    restart: always
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    # ログの設定（json-fileドライバーでログを管理）
+    logging:
+      driver: "json-file"
+      options:
+        # 1ファイルあたりの最大サイズ（10MB）
+        max-size: "10m"
+        # 保持するログファイルの最大数（3つまで）
+        max-file: "3"
+        # ラベルでアプリ名と環境を記録
+        labels: "app,env"
+    # ヘルスチェック（30秒ごとにコンテナの状態を確認）
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  nginx:
+    # 軽量なNginxイメージ
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    # Nginxのログも同じ設定で管理
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
