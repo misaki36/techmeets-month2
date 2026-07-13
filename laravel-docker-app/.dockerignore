@@ -37,3 +37,7 @@ README.md
 docker-compose.yml
 docker-compose.prod.yml
 Dockerfile
+
+# srcフォルダ内の環境設定ファイル
+src/.env
+src/.env.*

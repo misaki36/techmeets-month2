@@ -43,6 +43,8 @@ WORKDIR /var/www/html
 # 必要なパッケージだけインストール（alpineは軽量なLinux）
 RUN apk add --no-cache \
     mysql-client \
+    c-ares \
+    && apk upgrade c-ares \
     && docker-php-ext-install pdo pdo_mysql
 
 # ステージ1からPHPの依存関係だけコピー
