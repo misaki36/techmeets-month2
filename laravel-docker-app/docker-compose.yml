@@ -1,0 +1,5 @@
+services:
+  redis:
+    image: redis:7-alpine        # 軽量なRedisイメージ
+    ports:
+      - "6379:6379"              # ローカルの6379番ポートに接続できるようにする

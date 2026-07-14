@@ -3,15 +3,23 @@
 namespace App\Repositories;
 
 use App\Models\Post;
+use Illuminate\Support\Facades\Cache;
 
 // DBとのやりとりだけを担当するクラス
 class PostRepository
 {
-    // 投稿を全件取得（投稿者情報も一緒に取得）
+    
     public function getAll()
-    {
-        return Post::with('user')->latest()->get();
-    }
+{
+    // Cache::remember: キャッシュがあればDBアクセスせずに返す
+    // キャッシュがなければクロージャ内を実行してDBから取得し、キャッシュに保存する
+    return Cache::remember('posts.all', now()->addMinutes(60), function () {
+        return Post::with('user')
+                   ->withCount('likes') // いいね数もまとめて取得
+                   ->latest()
+                   ->get();
+    });
+}
 
     // IDで1件取得（見つからなければ404）
     public function findById(int $id)
@@ -20,21 +28,33 @@ class PostRepository
     }
 
     // 投稿を新規作成
-    public function create(array $data)
-    {
-        return Post::create($data);
-    }
+public function create(array $data)
+{
+    $post = Post::create($data);
 
-    // 投稿を更新
-    public function update(Post $post, array $data)
-    {
-        $post->update($data);
-        return $post;
-    }
+    // 新しい投稿が追加されたのでキャッシュを削除
+    Cache::forget('posts.all');
 
-    // 投稿を削除
-    public function delete(Post $post)
-    {
-        return $post->delete();
-    }
+    return $post;
+}
+
+// 投稿を更新
+public function update(Post $post, array $data)
+{
+    $post->update($data);
+
+    // 投稿が更新されたのでキャッシュを削除
+    Cache::forget('posts.all');
+
+    return $post;
+}
+
+// 投稿を削除
+public function delete(Post $post)
+{
+    // 投稿が削除されたのでキャッシュを削除
+    Cache::forget('posts.all');
+
+    return $post->delete();
+}
 }

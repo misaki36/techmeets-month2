@@ -14,12 +14,15 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-    {
-        // User::factory(10)->create();
+{
+    // テスト用ユーザーを10人作成
+    $users = User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+    // 各ユーザーに5件ずつ投稿を作成（合計50件）
+    $users->each(function ($user) {
+        \App\Models\Post::factory(5)->create([
+            'user_id' => $user->id,
         ]);
-    }
+    });
+}
 }

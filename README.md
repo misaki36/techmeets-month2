@@ -1,37 +1,27 @@
-## Week16 課題 - Docker応用（イメージ最適化・セキュリティ・CI/CD）
+## Week17: パフォーマンス最適化
 
-### 概要
-LaravelアプリのDockerイメージをDocker Hubに登録し、GitHub Actionsで自動ビルド・pushする仕組みを構築した。あわせてイメージの最適化・セキュリティ対策・ログ管理も実装した。
+### 実施した最適化
+| 項目 | 内容 |
+|------|------|
+| N+1問題の解消 | `with('user')`・`withCount('likes')`でeager loading導入 |
+| インデックス設計 | `user_id`・`created_at`にインデックスを追加 |
+| キャッシュ導入 | RedisとCache::rememberで投稿一覧をキャッシュ |
 
-### 機能一覧
+### 使用ツール
+- **Laravel Debugbar** - クエリ数の可視化
+- **Redis** - インメモリキャッシュ
+- **Lighthouse** - パフォーマンス計測
 
-**基本課題：最適化されたDockerfile作成**
-- マルチステージビルドによるイメージ最適化
-- Alpine Linuxベースの軽量イメージ（97MB）
-- 非rootユーザー（www-data）での実行
-- ヘルスチェック実装
+### Lighthouseスコア（改善後）
+| 項目 | スコア |
+|------|--------|
+| Performance | 79 |
+| Accessibility | 100 |
+| Best Practices | 100 |
+| SEO | 82 |
 
-**練習課題1：イメージサイズ削減**
-- Before: 747MB → After: 320MB（57%削減）
-
-**練習課題2：セキュリティ対策（Trivy）**
-- Trivyでイメージをスキャンし、HIGH/CRITICAL脆弱性をゼロに修正
-- .envファイルのイメージへの混入を防止
-
-**練習課題3：ログ収集**
-- docker-compose.ymlにjson-fileドライバーでログ管理を設定
-
-### セットアップ手順
-
-```bash
-cd laravel-docker-app
-docker compose up -d
-```
-
-詳しい環境変数の設定・テスト方法は `laravel-docker-app/README.md` を参照してください。
-
-### Docker Hubイメージ
-
-```bash
-docker pull kuwamisa/techmeets:latest
-```
+### 改善結果
+| 指標 | 改善前 | 改善後 |
+|------|--------|--------|
+| クエリ数（一覧ページ） | 52回 | 1回 |
+| キャッシュ | なし | Redis（60分） |

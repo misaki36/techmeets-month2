@@ -1,106 +1,54 @@
-# Week16: Docker応用 + CI/CD実践
+# Week17: パフォーマンス最適化
 
 ## 概要
-マルチステージビルドを使った最適化されたDockerfileを作成し、Docker HubへのイメージのpushとGitHub Actionsによる自動CI/CDパイプラインを構築した。
+Lighthouseでパフォーマンスを計測し、N+1問題の解消・インデックス設計・Redisキャッシュの導入によりフロントエンドからバックエンドまで一貫したパフォーマンス改善を実施しました。
 
-## 実装したファイル
+## 実装内容
+- `app/Repositories/PostRepository.php` - eager loading・withCount・キャッシュの実装
+- `database/migrations/2026_07_14_040347_add_index_to_posts_table.php` - インデックスの追加
+- `docker-compose.yml` - Redisコンテナの追加
 
-- `Dockerfile` - マルチステージビルドによる最適化されたDockerfile
-- `.dockerignore` - イメージに含めないファイルの設定
-- `docker-compose.yml` - ログ管理設定を含むDocker Compose設定
-- `.github/workflows/deploy.yml` - GitHub ActionsでDockerイメージを自動ビルド・pushするワークフロー
+## Lighthouseスコア（改善後）
+| 項目 | スコア |
+|------|--------|
+| Performance | 79 |
+| Accessibility | 100 |
+| Best Practices | 100 |
+| SEO | 82 |
 
-## 機能詳細
+## 改善内容
 
-### マルチステージビルド
-| ステージ | 役割 |
-|---|---|
-| composer-builder | PHPの依存関係をインストール |
-| node-builder | フロントエンドをビルド |
-| stage-2（最終） | 本番用の軽量イメージを生成 |
+### N+1問題の解消
+| 対応 | 効果 |
+|------|------|
+| `with('user')` | 投稿者情報をまとめて取得 |
+| `withCount('likes')` | いいね数をまとめて取得 |
 
-### イメージサイズ比較
-| | Before | After |
-|---|---|---|
-| ベースイメージ | php:8.4-fpm | php:8.3-fpm-alpine |
-| サイズ | 747MB | 320MB |
-| 削減率 | - | **57%削減** |
+### インデックス設計
+| カラム | 理由 |
+|--------|------|
+| `user_id` | ユーザーの投稿一覧の検索を高速化 |
+| `created_at` | 新着順の並び替えを高速化 |
 
-### セキュリティ対策
-- 非rootユーザー（www-data）で実行
-- `.dockerignore` で `.env` ファイルをイメージから除外
-- Trivyによるスキャンで HIGH/CRITICAL 脆弱性をゼロに修正
+### キャッシュ導入
+| 項目 | 内容 |
+|------|------|
+| キャッシュドライバー | Redis |
+| キャッシュ時間 | 60分 |
+| キャッシュ削除タイミング | 投稿の作成・更新・削除時 |
 
-| 脆弱性 | 深刻度 | 対応 |
-|---|---|---|
-| c-ares | HIGH | apk upgradeで修正 |
-| form-data | HIGH | 4.0.6にアップデート |
-| shell-quote | CRITICAL | 1.8.4にアップデート |
-| vite | HIGH | 7.3.5にアップデート |
-| Stripeキー漏洩 | CRITICAL | .dockerignoreで修正 |
+## 改善結果
+| 指標 | 改善前 | 改善後 |
+|------|--------|--------|
+| クエリ数（一覧ページ） | 52回 | 1回 |
+| キャッシュ | なし | Redis（60分） |
 
-### CI/CDパイプライン
-mainブランチへのpushをトリガーに、GitHub ActionsがDockerイメージを自動ビルドしてDocker Hubにpushする。
-mainにpush
-↓
-GitHub Actionsが自動起動
-↓
-Dockerイメージをビルド
-↓
-Docker Hubに自動push
-（コミットSHAタグ + latestタグ）
-
-### ログ管理
-docker-compose.ymlにjson-fileドライバーを設定し、ログを自動ローテーション管理する。
-- 1ファイルあたり最大10MB
-- 最大3ファイルまで保持
-
-## セットアップ手順
-
-### 1. Docker Hubからイメージをpull
-
-```bash
-docker pull kuwamisa/techmeets:latest
-```
-
-### 2. コンテナを起動
-
-```bash
-docker compose up -d
-```
-
-### 3. ログを確認
-
-```bash
-# リアルタイムでログを表示
-docker compose logs -f app
-
-# 最新100行を表示
-docker compose logs --tail=100 app
-```
-
-## GitHub Secretsの設定
-
-GitHub ActionsでDocker Hubに自動pushするために以下のシークレットを登録する。
-
-| シークレット名 | 内容 |
-|---|---|
-| DOCKERHUB_USERNAME | Docker Hubのユーザー名 |
-| DOCKERHUB_TOKEN | Docker Hubのアクセストークン |
+## 今後の予定
+- 練習課題3（画像のWebP変換・CDN配信）はAWSアカウント作成後に実施予定
 
 ## 学んだこと・つまったポイント
-
-- マルチステージビルドを使うことで、ビルドツールを最終イメージに含めずにサイズを大幅削減できる。
-- `.dockerignore` のパスは `Dockerfile` の `COPY` 命令の起点からの相対パスで指定する必要があり、`src/.env` のように正確に書かないと `.env` がイメージに混入する。
-- `deploy.yml` はリポジトリのルートの `.github/workflows/` に置かないとGitHub Actionsに認識されない。
-- GitHub ActionsのDocker buildは `context` の指定が重要で、`Dockerfile` のある場所を正しく指定する必要がある。
-
-## 使用技術
-
-- PHP 8.3
-- Laravel 12
-- Docker / Docker Compose
-- Alpine Linux
-- GitHub Actions
-- Docker Hub
-- Trivy（セキュリティスキャン）
+- `with('user')`を追加するだけでクエリ数が52回→3回に削減できる
+- `withCount()`を使うことで集計処理のN+1も解消できる
+- ローカルのPHPからDockerのRedisに接続する場合は`REDIS_HOST=127.0.0.1`にする必要がある
+- `REDIS_CLIENT=predis`に変更しないとClass "Redis" not foundエラーが出る
+- キャッシュ導入時はデータ更新時に`Cache::forget()`で削除しないと古いデータが表示され続ける
