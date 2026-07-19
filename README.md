@@ -1,33 +1,28 @@
-# Week10 課題 - React + Laravel API連携
+# Week11 課題 - AWSデプロイ（EC2 + RDS + S3）
 
 ## 概要
-Vite + Reactで作成したフロントエンドから、LaravelのREST APIを呼び出してタスクの一覧表示・新規作成を行うアプリです。
 
-## 機能一覧
-- タスク一覧表示（Laravel APIからaxiosで取得）
-- タスク新規作成（POSTリクエストでLaravelに送信）
-- 完了/未完了の表示
+Laravel + DockerアプリをAWS（EC2, RDS, S3）にデプロイし、インターネットからアクセスできる本番環境を構築しました。詳細は `laravel-docker-app/README.md` を参照してください。
 
-## コンポーネント構成
-- `App.jsx` - 全体のデータ管理・各コンポーネントの呼び出し
-- `TaskForm.jsx` - フォームの入力と送信
-- `TaskCard.jsx` - タスク1件の表示
+## 実装内容
 
-## コンポーネント分割の理由
-App・TaskForm・TaskCardの3つに分割した。Appは全体のデータ管理と各コンポーネントの呼び出しを担当し、TaskFormはフォームの入力と送信のみ、TaskCardはタスク1件の表示のみを担当する。役割を分けることで、修正が必要なときに該当ファイルだけを見ればよく、同じカードを別のページで使い回すことも容易になる。
+- EC2（Ubuntu, t3.micro）にDocker環境を構築し、アプリをデプロイ
+- RDS（MySQL）にDBを移行し、マイグレーションを実行
+- セキュリティグループでアクセス制御（SSHは自分のIPのみ、HTTPは全許可）
+- S3への画像アップロード機能を実装（練習課題1）
 
-## セットアップ手順
+## アクセスURL
 
-### バックエンド
-cd laravel-docker-app
-docker compose up -d
+- `http://52.198.68.2` - デプロイしたLaravelアプリ
+- `http://52.198.68.2/s3upload` - S3画像アップロード機能
 
-### フロントエンド
-cd my-frontend
-npm install
-npm run dev
+## 動作確認
 
-## 利用可能なURL
-- `http://localhost:5173` - タスク一覧・新規作成
-- `http://localhost/api/tasks` - タスク一覧API（GET）
-- `http://localhost/api/tasks/{id}` - タスク1件API（GET）
+- [x] EC2にSSH接続できることを確認
+- [x] `http://52.198.68.2` でLaravelアプリが表示されることを確認
+- [x] RDSへのマイグレーションが通ることを確認
+- [x] S3への画像アップロード・表示ができることを確認
+
+## 今後追加予定
+
+- 独自ドメイン・HTTPS化（Week13）
