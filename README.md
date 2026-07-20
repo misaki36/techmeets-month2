@@ -1,28 +1,20 @@
-# Week11 課題 - AWSデプロイ（EC2 + RDS + S3）
+## Week13: 独自ドメイン + HTTPS化
 
-## 概要
+### 概要
+独自ドメインを取得し、EC2上のLaravelアプリをHTTPSで公開しました。
 
-Laravel + DockerアプリをAWS（EC2, RDS, S3）にデプロイし、インターネットからアクセスできる本番環境を構築しました。詳細は `laravel-docker-app/README.md` を参照してください。
+### 実装内容
+- 独自ドメイン `techmeets-app-kuwa.com` を取得
+- DNS Aレコードを設定し、EC2のElastic IPと紐付け
+- ホストNginxをリバースプロキシとして設置し、Dockerコンテナへ転送
+- Let's Encrypt（Certbot）でSSL証明書を取得しHTTPS化
+- HTTP→HTTPS、www→wwwなしの自動リダイレクトを設定
 
-## 実装内容
+### 動作確認
+- [x] `https://techmeets-app-kuwa.com` にブラウザでアクセスし、鍵マークが表示されることを確認
+- [x] `http://` アクセス時に自動で `https://` へリダイレクトされることを確認
+- [x] `www.techmeets-app-kuwa.com` アクセス時に wwwなしへリダイレクトされることを確認
+- [x] `sudo certbot certificates` で証明書の有効性を確認
 
-- EC2（Ubuntu, t3.micro）にDocker環境を構築し、アプリをデプロイ
-- RDS（MySQL）にDBを移行し、マイグレーションを実行
-- セキュリティグループでアクセス制御（SSHは自分のIPのみ、HTTPは全許可）
-- S3への画像アップロード機能を実装（練習課題1）
-
-## アクセスURL
-
-- `http://52.198.68.2` - デプロイしたLaravelアプリ
-- `http://52.198.68.2/s3upload` - S3画像アップロード機能
-
-## 動作確認
-
-- [x] EC2にSSH接続できることを確認
-- [x] `http://52.198.68.2` でLaravelアプリが表示されることを確認
-- [x] RDSへのマイグレーションが通ることを確認
-- [x] S3への画像アップロード・表示ができることを確認
-
-## 今後追加予定
-
-- 独自ドメイン・HTTPS化（Week13）
+### 今後追加予定
+- SSL証明書の自動更新の動作確認（`certbot renew --dry-run`）

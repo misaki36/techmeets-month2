@@ -1,84 +1,56 @@
-# Week11 課題 - AWSデプロイ（EC2 + RDS + S3）
+## Week13: 独自ドメイン + HTTPS化（GitHub Actions同様の詳細版）
 
-## 概要
+### 公開URL
+https://techmeets-app-kuwa.com
 
-Week9・10で作成したLaravel + DockerアプリをAWS上にデプロイし、インターネットからアクセスできる本番環境を構築しました。
+### 構成
 
-## インフラ構成
-
-| リソース | 内容 |
+| ステップ | 内容 |
 |--------|------|
-| EC2 | Ubuntu 26.04 LTS, t3.micro（東京リージョン） |
-| RDS | MySQL 8.4, db.t4g.micro（東京リージョン） |
-| S3 | 画像アップロード用バケット |
-| Elastic IP | EC2に固定IPを割り当て |
+| ドメイン取得 | お名前.comで `techmeets-app-kuwa.com` を取得 |
+| DNS設定 | Aレコードを EC2 Elastic IP（52.198.68.2）に設定、CNAME(www)を設定 |
+| リバースプロキシ | ホストNginx → Dockerコンテナ(Nginx, port 8000) |
+| HTTPS化 | Let's Encrypt（Certbot）で証明書取得、Nginx設定へ自動反映 |
 
-## アクセスURL
+### 使用ツール
+- **Nginx** - ホスト側のリバースプロキシ
+- **Certbot（python3-certbot-nginx）** - SSL証明書の取得・自動更新設定
+- **Let's Encrypt** - 無料SSL証明書の発行元
 
-`http://52.198.68.2`
+### Nginx設定ファイル
+`/etc/nginx/sites-available/techmeets-app-kuwa.conf`
 
-## デプロイ手順
+- `techmeets-app-kuwa.com` : Laravelアプリへのリバースプロキシ（80→443リダイレクト含む）
+- `www.techmeets-app-kuwa.com` : wwwなしドメインへ301リダイレクト
 
-1. EC2インスタンスを作成し、Elastic IPを割り当て
-2. EC2にSSH接続し、Docker・Docker Composeをインストール
-3. GitHubからリポジトリをclone
-4. RDS（MySQL）インスタンスを作成
-5. `.env` にRDSのエンドポイント・DB情報を設定
-6. `docker compose up -d` でコンテナを起動
-7. `composer install --no-dev`（PHP8.2環境のためテスト用パッケージを除外）
-8. `php artisan key:generate` / `php artisan migrate` を実行
-9. セキュリティグループを設定（詳細は下記）
-10. `http://<EC2のIP>` でブラウザからアクセスできることを確認
+### コマンド確認結果
 
-## セキュリティグループ設計
+#### `dig techmeets-app-kuwa.com +short`
+```
+52.198.68.2
+```
+ドメインのAレコードを問い合わせた結果。EC2のElastic IPが正しく返っており、DNS設定が反映されていることを確認できる。
 
-**EC2用（launch-wizard-1）**
+#### `curl -I https://techmeets-app-kuwa.com`
+```
+HTTP/1.1 200 OK
+Server: nginx/1.28.3 (Ubuntu)
+Content-Type: text/html; charset=utf-8
+X-Powered-By: PHP/8.2.32
+```
+HTTPSアクセスに対し200 OKが返っており、Nginx経由でLaravel(PHP)アプリが正常に応答していることを確認できる。
 
-| タイプ | ポート | ソース | 理由 |
-|--------|--------|--------|------|
-| SSH | 22 | 自分のIPアドレス/32 | 運用者本人のみログイン可能にし、ブルートフォース攻撃のリスクを下げるため |
-| HTTP | 80 | 0.0.0.0/0 | Webアプリとして一般公開する必要があるため |
+#### `sudo certbot certificates`
+```
+Certificate Name: techmeets-app-kuwa.com
+Domains: techmeets-app-kuwa.com www.techmeets-app-kuwa.com
+Expiry Date: 2026-10-18 (VALID: 89 days)
+```
+Let's Encryptで発行された証明書情報。wwwあり・なし両方をカバーしており、Certbotの自動更新タイマーにより期限前に更新される。
 
-**RDS用（default）**
-
-| タイプ | ポート | ソース | 理由 |
-|--------|--------|--------|------|
-| MySQL/Aurora | 3306 | EC2のセキュリティグループ（launch-wizard-1） | アプリケーションサーバーからのみDB接続を許可し、インターネットからの直接アクセスを遮断するため |
-
-## 動作確認
-
-- [x] EC2にSSH接続できることを確認
-- [x] RDSにマイグレーションが通ることを確認
-- [x] `docker compose up -d` でコンテナが起動することを確認
-- [x] `http://52.198.68.2` でLaravelアプリが表示されることを確認
-- [x] S3への画像アップロード・表示ができることを確認（練習課題1）
-
-## 学んだこと・つまったポイント
-
-- RDS作成時に「EC2コンピューティングリソースに接続」を選んでも、RDS側のセキュリティグループが自動的に正しいルールに更新されるとは限らない。実際は`default`セキュリティグループが「同グループ内のみ許可」のままで、EC2からの接続がタイムアウトした。RDSのセキュリティグループに、EC2のセキュリティグループを送信元とするインバウンドルールを手動追加して解決。
-- コンテナのPHPが8.2系のため、PHP8.3以上を要求するテスト用パッケージ（pest, phpunitなど）で`composer install`が失敗。本番環境ではテストツールは不要と判断し、`--no-dev` / `--ignore-platform-req=php`で回避。
-- 画像アップロード時に413エラーが発生。Nginxのデフォルトアップロード上限（1MB程度）が原因で、`client_max_body_size 10M;`をNginx設定に追加して解決。
-- S3画像へのアクセスが403で拒否される問題が発生。バケットの「パブリックアクセスをブロック」解除だけでは不十分で、バケットポリシーで`s3:GetObject`を明示的に許可する必要があった。
-
-## 練習課題1: S3への画像アップロード
-
-### 実装内容
-
-- S3バケット（`techmeet-1ku1wa7`）を作成し、パブリック読み取りを許可
-- IAMユーザーを作成し、`AmazonS3FullAccess`ポリシーでアクセスキーを発行
-- `league/flysystem-aws-s3-v3` パッケージを導入
-- `/s3upload` にアクセスすると画像アップロードフォームが表示され、アップロード後にS3上のURLで画像が表示される
-
-### 動作確認
-
-- [x] S3バケットへのアップロードが成功することを確認
-- [x] アップロードした画像のURLにブラウザから直接アクセスできることを確認
-
-## 使用技術
-
-- PHP 8.2
-- Laravel 12
-- MySQL 8.4 (RDS)
-- Nginx
-- Docker / Docker Compose
-- AWS（EC2, RDS, S3, IAM）
+### 学んだこと・つまったポイント
+- コンテナ内のNginxがすでにホストのポート80を使用していたため、`docker-compose.yml`の`APP_PORT`を8000に変更し、`127.0.0.1:8000:80`とバインドしてホストNginxと競合しないようにした
+- Certbot実行はDNS反映（Aレコード）が完了していないと失敗するため、`dig`コマンドでの事前確認が重要
+- SSL証明書取得後、EC2セキュリティグループに443番ポート（HTTPS）のインバウンドルールが必要（80番だけでは繋がらない）
+- Certbotが自動でNginx設定ファイルにSSL関連の記述を追記してくれるため、手動でのcertificate/key指定は最小限で済む
+- www統一のリダイレクトは、Certbotが生成した443番のserver_nameからwwwを外し、www専用のリダイレクト用serverブロックを別途追加することで実現
