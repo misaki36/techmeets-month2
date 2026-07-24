@@ -1,0 +1,32 @@
+# ============================================
+# 最適化前のDockerfile（シングルステージ・重い）
+# ============================================
+
+# 通常のPHPイメージ（Alpineではなく通常版・重い）
+FROM php:8.4-fpm
+
+WORKDIR /var/www/html
+
+# composerをインストール（ビルドツールが残る）
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    zip \
+    unzip \
+    && curl -sS https://getcomposer.org/installer | php \
+    && mv composer.phar /usr/local/bin/composer
+
+# PHPの拡張をインストール
+RUN docker-php-ext-install pdo pdo_mysql
+
+# 全ファイルをコピー（node_modulesやvendorも含む）
+COPY src/ .
+
+# composerの依存関係をインストール（開発用も含む）
+RUN composer install
+
+# 全ユーザーに権限を付与（セキュリティ的に良くない）
+RUN chmod -R 777 storage bootstrap/cache
+
+# rootユーザーのまま実行（セキュリティ的に良くない）
+CMD ["php-fpm"]

@@ -1,66 +1,40 @@
+# Docker Compose設定ファイル（開発・本番共通のログ設定）
 services:
-  # Nginx（Webサーバー）
+  app:
+    # Docker Hubのイメージを使用（タグで切り替え可能）
+    image: kuwamisa/techmeets:${IMAGE_TAG:-latest}
+    restart: always
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    # ログの設定（json-fileドライバーでログを管理）
+    logging:
+      driver: "json-file"
+      options:
+        # 1ファイルあたりの最大サイズ（10MB）
+        max-size: "10m"
+        # 保持するログファイルの最大数（3つまで）
+        max-file: "3"
+        # ラベルでアプリ名と環境を記録
+        labels: "app,env"
+    # ヘルスチェック（30秒ごとにコンテナの状態を確認）
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
   nginx:
-    image: nginx:latest
+    # 軽量なNginxイメージ
+    image: nginx:alpine
+    restart: always
     ports:
-      - "${APP_PORT}:80"
-    volumes:
-      - ./src:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - "80:80"
     depends_on:
       - app
-    networks:
-      - app-network
-
-  # PHP-FPM（アプリケーション）
-  app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    volumes:
-      - ./src:/var/www/html
-    environment:
-      - DB_HOST=db
-      - DB_DATABASE=laravel
-      - DB_USERNAME=root
-      - DB_PASSWORD=secret
-    depends_on:
-      - db
-    networks:
-      - app-network
-
-  # MySQL（データベース）
-  db:
-    image: mysql:8.0
-    ports:
-      - "${DB_PORT}:3306"
-    environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: secret
-    volumes:
-      - db-data:/var/lib/mysql   # MySQLのデータを「db-data」というボリュームに永続化
-    networks:
-      - app-network
-
-  # phpMyAdmin（データベース管理ツール）
-  phpmyadmin:
-    image: phpmyadmin:latest
-    ports:
-      - "${PMA_PORT}:80"
-    environment:
-      PMA_HOST: db
-      PMA_USER: root
-      PMA_PASSWORD: secret
-    depends_on:
-      - db
-    networks:
-      - app-network
-
-# 永続化ボリューム（コンテナを削除してもDBのデータを残す）
-volumes:
-  db-data:
-
-# 仮想ネットワーク（同じネットワーク内のコンテナはサービス名で通信できる）
-networks:
-  app-network:
-    driver: bridge
+    # Nginxのログも同じ設定で管理
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
