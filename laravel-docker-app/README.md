@@ -17,6 +17,15 @@
 
 `.github/workflows/ci.yml`
 
+### デプロイ先
+- `https://techmeets-app-kuwa.com`
+
+### 自動デプロイの流れ
+1. mainブランチへpush・マージ
+2. Lintチェック（PHP CS Fixer + PHPStan）
+3. テスト実行（PHPUnit）
+4. EC2サーバーへ自動デプロイ（`docker compose restart app nginx`）
+
 ### ローカルでの実行
 
 ```bash
@@ -34,3 +43,8 @@ vendor/bin/phpstan analyse --memory-limit=256M
 - DockerプロジェクトはLaravelが`src/`配下にあるため、`working-directory`の指定が必要
 - PHPStanはLaravelの動的メソッドを理解できないため、larastanの導入が必要
 - PHP CS Fixerのインストールでcomposer.lockが更新され、PHPバージョンの要件が上がる場合がある
+- mainブランチへのpush時に自動デプロイが走る仕組みを実装した
+- EC2のセキュリティグループでSSH（22番ポート）を全IPに開放しないとGitHub Actionsから接続できない
+- appコンテナを再起動するとIPアドレスが変わり、nginxが502エラーになる。`docker compose restart app nginx` で両方再起動することで解決
+- `working-directory` の指定がないとGitHub ActionsがLaravelのファイルを見つけられない
+- `.github/workflows/` はリポジトリのルートに置かないとActionsが認識されない

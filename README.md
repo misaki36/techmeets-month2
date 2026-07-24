@@ -22,5 +22,6 @@ docker compose up -d
 
 詳しい設定は`laravel-docker-app/README.md`を参照してください。
 
-### 今後追加予定
-- AWSサーバーへの自動デプロイ
+### 自動デプロイ
+- mainブランチへのpush時にEC2サーバーへ自動デプロイ
+- デプロイ先：`https://techmeets-app-kuwa.com`
